@@ -1,5 +1,4 @@
 import Link from "next/link";
-import React from "react";
 import MobileNavbar from "./MobileNavbar";
 import DesktopNavbar from "./DesktopNavbar";
 import { currentUser } from "@clerk/nextjs/server";

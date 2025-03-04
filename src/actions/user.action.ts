@@ -8,6 +8,7 @@ export async function syncUser() {
   try {
     const { userId } = await auth();
     const user = await currentUser();
+
     if (!userId || !user) return;
 
     const existingUser = await prisma.user.findUnique({
@@ -17,6 +18,7 @@ export async function syncUser() {
     });
 
     if (existingUser) return existingUser;
+
     const dbUser = await prisma.user.create({
       data: {
         clerkId: userId,
@@ -30,7 +32,7 @@ export async function syncUser() {
 
     return dbUser;
   } catch (error) {
-    console.log("Error syncing user", error);
+    console.log("Error in syncUser", error);
   }
 }
 
@@ -41,7 +43,11 @@ export async function getUserByClerkId(clerkId: string) {
     },
     include: {
       _count: {
-        select: { followers: true, following: true, posts: true },
+        select: {
+          followers: true,
+          following: true,
+          posts: true,
+        },
       },
     },
   });
@@ -60,11 +66,11 @@ export async function getDbUserId() {
 
 export async function getRandomUsers() {
   try {
-    const userId = await getDBUserId();
+    const userId = await getDbUserId();
 
     if (!userId) return [];
 
-    // get 3 random users exclude ourselves and users that we already follow
+    // get 3 random users exclude ourselves & users that we already follow
     const randomUsers = await prisma.user.findMany({
       where: {
         AND: [
@@ -96,18 +102,18 @@ export async function getRandomUsers() {
 
     return randomUsers;
   } catch (error) {
-    console.log("Error fetching users", error);
+    console.log("Error fetching random users", error);
     return [];
   }
 }
 
 export async function toggleFollow(targetUserId: string) {
   try {
-    const userId = await getDBUserId();
+    const userId = await getDbUserId();
 
     if (!userId) return;
 
-    if (userId === targetUserId) throw new Error("Cannot follow yourself");
+    if (userId === targetUserId) throw new Error("You cannot follow yourself");
 
     const existingFollow = await prisma.follows.findUnique({
       where: {
@@ -147,11 +153,11 @@ export async function toggleFollow(targetUserId: string) {
         }),
       ]);
     }
+
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    console.log("Error toggling follow", error);
-    throw new Error("Failed to toggle follow");
+    console.log("Error in toggleFollow", error);
     return { success: false, error: "Error toggling follow" };
   }
 }
